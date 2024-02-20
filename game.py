@@ -3,7 +3,7 @@ import math, random, copy
 PLAYER, CPU = 1, 2
 MINIMAX_DEPTH = 9
 
-def play():
+def _prompt_play():
     """
     Function to play a game of Tic-Tac-Toe.
 
@@ -16,7 +16,7 @@ def play():
     current_player = PLAYER
     turn = 0
 
-    while not check_winner(board, current_player) and not check_draw(board):
+    while not _check_winner(board, current_player) and not _check_draw(board):
         """
         Main game loop.
 
@@ -25,16 +25,17 @@ def play():
         Returns:
         - None
         """
-        display_board(board)
-        
+        _display_board(board)
+    
         if current_player == PLAYER:
             while True:
-                position = get_player_input()
-                if verify_move(board, position):
+                position = _get_player_move()
+                if _verify_move(board, position):
                     break
                 print('Invalid move, choose another position!')
         else:
-            position = get_computer_move(board, MINIMAX_DEPTH - turn)
+            position = find_best_move(board, MINIMAX_DEPTH - turn)
+            print(f'CPU input move: {position+1}')
 
         board = make_move(position, board, current_player)
         
@@ -43,9 +44,9 @@ def play():
 
         turn += 1
     
-    display_board(board)
+    _display_board(board)
 
-    if check_winner(board, current_player):
+    if _check_winner(board, current_player):
         """
         Checks and prints the winner of the game.
 
@@ -59,7 +60,7 @@ def play():
     else:
         print('It\'s a draw!')
 
-def display_board(board):
+def _display_board(board: list):
     """
     Display the Tic-Tac-Toe board.
 
@@ -75,7 +76,7 @@ def display_board(board):
     print('--+---+--')
     print(f'{board[6]} | {board[7]} | {board[8]}')
 
-def make_move(position, board, player):
+def make_move(position: int, board: list, player: int):
     """
     Make a move on the Tic-Tac-Toe board.
 
@@ -92,7 +93,7 @@ def make_move(position, board, player):
 
     return move_board
 
-def check_winner(board, player):
+def _check_winner(board: list, player: int):
     """
     Check if a player has won the Tic-Tac-Toe game.
 
@@ -119,7 +120,7 @@ def check_winner(board, player):
 
     return None
 
-def check_draw(board):
+def _check_draw(board: list):
     """
     Check if the Tic-Tac-Toe game is a draw by verifying if the board is full.
 
@@ -131,7 +132,7 @@ def check_draw(board):
     """
     return all(values not in board for values in ['1', '2', '3', '4', '5', '6', '7', '8', '9'])
 
-def get_player_input():
+def _get_player_move():
     """
     Get the player's move input.
 
@@ -142,23 +143,7 @@ def get_player_input():
 
     return int(position) - 1
 
-def get_computer_move(board, depth):
-    """
-    Get the computer's move based on the minimax algorithm.
-
-    Args:
-    - board (list): List representing the Tic-Tac-Toe board.
-    - depth (int): Depth of the minimax algorithm.
-
-    Returns:
-    - int: Computer's move position (0-8).
-    """
-    move = find_best_move(board, depth)
-    print(f'CPU input move: {move+1}')
-
-    return move
-
-def minimax(board, depth, alpha, beta, maximizing_player, player):
+def _minimax(board: list, depth: int, alpha: float, beta: float, maximizing_player: bool, player: int):
     """
     Implementation of the minimax algorithm for Tic-Tac-Toe.
 
@@ -173,17 +158,17 @@ def minimax(board, depth, alpha, beta, maximizing_player, player):
     Returns:
     - float: The evaluation score for the given board state.
     """
-    if depth == 0 or check_winner(board, player):
-        return evaluate(board, player)
+    if depth == 0 or _check_winner(board, player):
+        return _evaluate(board, player)
 
     if maximizing_player:
         max_score = -math.inf
-        moves = get_possible_moves(board)
+        moves = _get_possible_moves(board)
         for move in moves:
             new_board = make_move(move, board, CPU)
-            score = minimax(new_board, depth - 1, alpha, beta, False, CPU)
+            score = _minimax(new_board, depth - 1, alpha, beta, False, CPU)
             max_score = max(max_score, score)
-
+        
             alpha = max(alpha, score)
             if beta <= alpha:
                 break
@@ -193,9 +178,9 @@ def minimax(board, depth, alpha, beta, maximizing_player, player):
     else:
         min_score = math.inf
 
-        for move in get_possible_moves(board):
+        for move in _get_possible_moves(board):
             new_board = make_move(move, board, PLAYER)
-            score = minimax(new_board, depth - 1, alpha, beta, True, PLAYER)
+            score = _minimax(new_board, depth - 1, alpha, beta, True, PLAYER)
             min_score = min(min_score, score)
 
             beta = min(beta, score)
@@ -204,7 +189,7 @@ def minimax(board, depth, alpha, beta, maximizing_player, player):
             
         return min_score
     
-def find_best_move(board, depth):
+def find_best_move(board: list, depth: int):
     """
     Find the best move for the computer using the minimax algorithm.
 
@@ -219,9 +204,9 @@ def find_best_move(board, depth):
     best_move = None
     best_move_board = copy.deepcopy(board)
 
-    for move in get_possible_moves(best_move_board):
+    for move in _get_possible_moves(best_move_board):
         new_board = make_move(move, best_move_board, CPU)
-        score = minimax(new_board, depth - 1, -math.inf, math.inf, False, CPU)
+        score = _minimax(new_board, depth - 1, -math.inf, math.inf, False, CPU)
         
         if score > best_score:
             best_score = score
@@ -229,7 +214,7 @@ def find_best_move(board, depth):
     
     return best_move
     
-def evaluate(board, player):
+def _evaluate(board: list, player: int):
     """
     Evaluate the current state of the Tic-Tac-Toe board.
 
@@ -240,7 +225,7 @@ def evaluate(board, player):
     Returns:
     - int: Positive score if the maximizing player wins, negative score if the minimizing player wins, or 0 for a tie.
     """
-    winner = check_winner(board, player)
+    winner = _check_winner(board, player)
 
     if winner == CPU:
         return 1
@@ -248,12 +233,12 @@ def evaluate(board, player):
         return -1
     
     for i in range(1, 9):
-        if not verify_move(board, i):
+        if not _verify_move(board, i):
             return 0
     
     return 0
 
-def get_possible_moves(board):
+def _get_possible_moves(board: list):
     """
     Get a list of possible moves on the Tic-Tac-Toe board.
 
@@ -268,7 +253,7 @@ def get_possible_moves(board):
 
     return moves
 
-def verify_move(board, move):
+def _verify_move(board: list, move: int):
     """
     Verify if a move is valid on the Tic-Tac-Toe board.
 
@@ -282,4 +267,5 @@ def verify_move(board, move):
     return board[move] not in ('X', 'O')
 
 # Run the game
-play()
+if __name__ == "__main__":
+    _prompt_play()
